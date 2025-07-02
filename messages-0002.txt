@@ -1,3 +1,4 @@
 Abacaus
 DNA, Deoxyribonucleic Acid
 Interpersonal Communication
+Pascal’s triangle
