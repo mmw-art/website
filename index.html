@@ -2,181 +2,384 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Million Message Wall. One million messages. One wall. One world.</title>
+  <title>Million Message Wall</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <style>
-    #banner {
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0a0a0f;
+      --surface: #13131a;
+      --surface2: #1e1e2a;
+      --accent: #7c6af7;
+      --accent2: #a78bfa;
+      --text: #e8e8f0;
+      --muted: #6b6b80;
+      --border: rgba(255,255,255,0.07);
+      --tile-size: min(9vw, 120px);
+    }
+
+    html, body {
+      height: 100%;
+      background: var(--bg);
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      color: var(--text);
+      overflow: hidden;
+    }
+
+    /* ── NAV ── */
+    #nav {
       position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      background-color: #000;
+      top: 0; left: 0; right: 0;
+      height: 64px;
+      background: rgba(10,10,15,0.85);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 24px;
+      z-index: 100;
+      gap: 16px;
+    }
+
+    #nav-title {
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      color: var(--accent2);
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    #wall-tabs {
+      display: flex;
+      gap: 6px;
+      overflow-x: auto;
+      scrollbar-width: none;
+      flex: 1;
+      justify-content: center;
+    }
+    #wall-tabs::-webkit-scrollbar { display: none; }
+
+    .wall-tab {
+      padding: 6px 14px;
+      border-radius: 20px;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.2s;
+      appearance: none;
+      -webkit-appearance: none;
+    }
+    .wall-tab:hover {
+      border-color: var(--accent);
+      color: var(--text);
+    }
+    .wall-tab.active {
+      background: var(--accent);
+      border-color: var(--accent);
       color: #fff;
-      text-align: center;
-      padding: 8px 8px;
-      z-index: 1000;
-      font-size: 16px;
+    }
+
+    #nav-cta {
+      flex-shrink: 0;
+      padding: 7px 14px;
+      border-radius: 20px;
+      background: transparent;
+      border: 1px solid var(--accent);
+      color: var(--accent2);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+    #nav-cta:hover {
+      background: var(--accent);
+      color: #fff;
+    }
+
+    /* ── MAIN ── */
+    #main {
+      position: fixed;
+      top: 64px; left: 0; right: 0; bottom: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      overflow: auto;
+    }
+
+    #wall-wrap {
       display: flex;
       flex-direction: column;
-      justify-content: center;
       align-items: center;
+      gap: 16px;
     }
-    #banner a {
-      color: #fff;
-      text-decoration: none;
-      font-weight: bold;
-      margin-bottom: 8px;
+
+    #wall-label {
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      color: var(--text);
+      opacity: 0;
+      transform: translateY(6px);
+      transition: opacity 0.4s, transform 0.4s;
     }
-    #banner a:hover {
-      text-decoration: underline;
-    }
-    .slider-controls {
-      display: flex;
-      align-items: center;
-      gap: 5px;
-    }
-    button {
-      padding: 12px 20px;
-      font-size: 18px;
-      cursor: pointer;
-      border-radius: 6px;
-      min-width: 48px;
-      min-height: 48px;
-      touch-action: manipulation;
-    }
-    .tile-number {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 20px;
-      background: rgba(0, 0, 0, 0.7);
-      color: white;
-      text-align: center;
-      line-height: 20px;
-      font-size: 12px;
+    #wall-label.visible {
       opacity: 1;
-      transition: opacity 0.3s ease;
+      transform: translateY(0);
     }
-    .tile:hover .tile-number {
-      opacity: 1;
-    }
-    .tile-number.hidden {
-      display: none;
-    }
-    html, body {
-      margin: 0;
-      height: 100%;
-      background: #000;
-      font-family: sans-serif;
-      color: white;
-    }
-    #viewport {
-      width: 100vw;
-      height: 100vh;
-      overflow: auto;
-      position: relative;
-      top: 80px;
-    }
+
     #grid {
-      position: relative;
-      width: 1600px;
-      height: 9000px;
-      margin: 0 auto;
+      display: grid;
+      grid-template-columns: repeat(10, var(--tile-size));
+      grid-template-rows: repeat(10, calc(var(--tile-size) * 9 / 16));
+      gap: 4px;
     }
+
+    /* ── TILE ── */
     .tile {
-      position: absolute;
-      width: 160px;
-      height: 90px;
-      background: #222;
+      position: relative;
+      border-radius: 6px;
       overflow: hidden;
       cursor: pointer;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      transition: transform 0.18s, box-shadow 0.18s;
+    }
+    .tile:hover {
+      transform: scale(1.06);
+      box-shadow: 0 8px 32px rgba(124,106,247,0.35);
+      z-index: 2;
+      border-color: var(--accent);
     }
     .tile img {
       width: 100%;
       height: 100%;
       object-fit: cover;
-      object-position: center;
+      display: block;
     }
-    .iframe-container {
+    .tile-empty {
       width: 100%;
       height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      color: var(--muted);
     }
-    .iframe-container iframe {
+
+    /* tile number badge */
+    .tile-num {
+      position: absolute;
+      top: 4px;
+      left: 4px;
+      background: rgba(0,0,0,0.65);
+      color: rgba(255,255,255,0.7);
+      font-size: 10px;
+      font-weight: 600;
+      padding: 1px 5px;
+      border-radius: 4px;
+      pointer-events: none;
+    }
+
+    /* hover message overlay */
+    .tile-overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to top, rgba(10,10,15,0.92) 0%, rgba(10,10,15,0.4) 60%, transparent 100%);
+      display: flex;
+      align-items: flex-end;
+      padding: 6px;
+      opacity: 0;
+      transition: opacity 0.2s;
+      pointer-events: none;
+    }
+    .tile:hover .tile-overlay { opacity: 1; }
+    .tile-overlay-text {
+      font-size: 10px;
+      line-height: 1.3;
+      color: #fff;
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    /* ── MODAL ── */
+    #modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.75);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      z-index: 200;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s;
+    }
+    #modal-backdrop.open {
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    #modal {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
       width: 100%;
-      height: 100%;
-      border: none;
+      max-width: 520px;
+      overflow: hidden;
+      transform: translateY(16px) scale(0.97);
+      transition: transform 0.25s;
+      box-shadow: 0 24px 80px rgba(0,0,0,0.6);
     }
-    input[type="range"] {
-      -webkit-appearance: none;
-      width: 60vw;
-      max-width: 200px;
-      min-width: 50px;
-      height: 6px;
-      background: #333;
-      border-radius: 3px;
-      outline: none;
+    #modal-backdrop.open #modal {
+      transform: translateY(0) scale(1);
+    }
+
+    #modal-thumb {
+      width: 100%;
+      aspect-ratio: 16/9;
+      object-fit: cover;
+      display: block;
+      background: var(--surface2);
+    }
+
+    #modal-body {
+      padding: 20px 24px 24px;
+    }
+
+    #modal-meta {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--accent2);
+      margin-bottom: 8px;
+    }
+
+    #modal-message {
+      font-size: 17px;
+      font-weight: 500;
+      line-height: 1.5;
+      color: var(--text);
+      margin-bottom: 20px;
+    }
+
+    #modal-actions {
+      display: flex;
+      gap: 10px;
+    }
+
+    #modal-yt {
+      flex: 1;
+      padding: 10px 16px;
+      border-radius: 8px;
+      background: #ff0000;
+      color: #fff;
+      font-size: 14px;
+      font-weight: 600;
+      text-decoration: none;
+      text-align: center;
+      transition: opacity 0.2s;
+    }
+    #modal-yt:hover { opacity: 0.85; }
+    #modal-yt.hidden { display: none; }
+
+    #modal-close {
+      padding: 10px 16px;
+      border-radius: 8px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-size: 14px;
+      font-weight: 600;
       cursor: pointer;
-    }
-    @media (max-width: 600px) {
-      input[type="range"] {
-        width: 80vw;
-      }
-    }
-    input[type="range"]::-webkit-slider-thumb {
-      -webkit-appearance: none;
+      transition: background 0.2s;
       appearance: none;
-      width: 16px;
-      height: 16px;
-      background: #000;
-      cursor: pointer;
-      border-radius: 50%;
-      border: 2px solid #fff;
-      margin-top: -5px;
+      -webkit-appearance: none;
     }
-    input[type="range"]::-moz-range-thumb {
-      width: 16px;
-      height: 16px;
-      background: #000;
-      cursor: pointer;
+    #modal-close:hover { background: #2a2a3a; }
+
+    /* ── LOADING ── */
+    #loading {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      color: var(--muted);
+      gap: 10px;
+    }
+    .spinner {
+      width: 18px; height: 18px;
+      border: 2px solid var(--border);
+      border-top-color: var(--accent);
       border-radius: 50%;
-      border: 2px solid #fff;
+      animation: spin 0.7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    @media (max-width: 600px) {
+      :root { --tile-size: min(18vw, 80px); }
+      #nav-title { display: none; }
+      #nav-cta { display: none; }
+      #wall-tabs { justify-content: flex-start; }
     }
   </style>
 </head>
-
 <body>
-  <div id="banner">
-    <a href="https://igg.me/at/IouGgXu7tdU/x/38646669#/" target="_blank">
-      Select a wall and scroll to explore, each wall has 1000 tiles (10w X 100h). <br>  
-      Click here to contribute if you want! 
-    </a>
-    <div class="slider-controls">
-      <span id="sliderValue">Wall 1: EDM</span>
-      <button id="downBtn">−</button>
-      <input type="range" id="videoSlider" min="1" max="1000" value="1" />
-      <button id="upBtn">+</button>
+
+  <!-- NAV -->
+  <nav id="nav">
+    <span id="nav-title">✦ Million Message Wall</span>
+    <div id="wall-tabs"></div>
+    <a id="nav-cta" href="https://igg.me/at/IouGgXu7tdU/x/38646669#/" target="_blank">Contribute</a>
+  </nav>
+
+  <!-- MAIN -->
+  <div id="main">
+    <div id="wall-wrap">
+      <div id="wall-label"></div>
+      <div id="grid">
+        <div id="loading"><div class="spinner"></div> Loading wall…</div>
+      </div>
     </div>
   </div>
 
-  <div id="viewport">
-    <div id="grid"></div>
+  <!-- MODAL -->
+  <div id="modal-backdrop">
+    <div id="modal">
+      <img id="modal-thumb" src="" alt="Video thumbnail" />
+      <div id="modal-body">
+        <div id="modal-meta"></div>
+        <div id="modal-message"></div>
+        <div id="modal-actions">
+          <a id="modal-yt" href="#" target="_blank">▶ Watch on YouTube</a>
+          <button id="modal-close">Close</button>
+        </div>
+      </div>
+    </div>
   </div>
 
   <script>
-    const viewport = document.getElementById('viewport');
-    const grid = document.getElementById('grid');
-
-    const TILE_WIDTH = 160;
-    const TILE_HEIGHT = 90;
-    const GRID_COLS = 10;
-    const GRID_ROWS = 100;
-
-    let sampleVideos = [];
-    let messages = [];
-
-    let tileNumbersVisible = true;
-    const visibleTiles = {};
+    const COLS = 10;
+    const ROWS = 10;
+    const TOTAL = COLS * ROWS;
 
     const wallNames = {
       1: "EDM",
@@ -187,190 +390,141 @@
       6: "Crossfit"
     };
 
-    const slider = document.getElementById('videoSlider');
-    const sliderValue = document.getElementById('sliderValue');
-    const upBtn = document.getElementById('upBtn');
-    const downBtn = document.getElementById('downBtn');
+    const wallIds = Object.keys(wallNames).map(Number);
 
-    // 🔥 Save original banner HTML for restoring later
-    const originalBannerHTML = document.getElementById('banner').innerHTML;
+    let currentWall = 1;
+    let sampleVideos = [];
+    let messages = [];
 
-    // 🔥 Function to restore original banner UI
-    function restoreBanner() {
-      const banner = document.getElementById('banner');
-      banner.innerHTML = originalBannerHTML;
+    // ── Build wall tabs ──
+    const tabsEl = document.getElementById('wall-tabs');
+    wallIds.forEach(id => {
+      const btn = document.createElement('button');
+      btn.className = 'wall-tab' + (id === currentWall ? ' active' : '');
+      btn.textContent = `${wallNames[id]}`;
+      btn.dataset.wall = id;
+      btn.addEventListener('click', () => loadWall(id));
+      tabsEl.appendChild(btn);
+    });
 
-      // rebind event listeners for slider controls
-      document.getElementById('videoSlider').addEventListener('input', updateSliderDisplay);
-      document.getElementById('upBtn').addEventListener('click', () => {
-        if (parseInt(slider.value, 10) < parseInt(slider.max, 10)) {
-          slider.value = parseInt(slider.value, 10) + 1;
-          slider.dispatchEvent(new Event('input'));
-          updateSliderDisplay();
-        }
+    // ── Load wall data ──
+    function loadWall(wallId) {
+      currentWall = wallId;
+
+      // update tabs
+      document.querySelectorAll('.wall-tab').forEach(btn => {
+        btn.classList.toggle('active', parseInt(btn.dataset.wall) === wallId);
       });
-      document.getElementById('downBtn').addEventListener('click', () => {
-        if (parseInt(slider.value, 10) > parseInt(slider.min, 10)) {
-          slider.value = parseInt(slider.value, 10) - 1;
-          slider.dispatchEvent(new Event('input'));
-          updateSliderDisplay();
-        }
-      });
-    }
 
-    function renderTiles() {
-      const scrollLeft = viewport.scrollLeft;
-      const scrollTop = viewport.scrollTop;
-      const viewportWidth = viewport.clientWidth;
-      const viewportHeight = viewport.clientHeight;
+      // update label
+      const label = document.getElementById('wall-label');
+      label.textContent = `Wall ${wallId}: ${wallNames[wallId]}`;
+      label.classList.remove('visible');
+      requestAnimationFrame(() => requestAnimationFrame(() => label.classList.add('visible')));
 
-      const startCol = Math.floor(scrollLeft / TILE_WIDTH);
-      const endCol = Math.min(GRID_COLS, Math.ceil((scrollLeft + viewportWidth) / TILE_WIDTH));
-      const startRow = Math.floor(scrollTop / TILE_HEIGHT);
-      const endRow = Math.min(GRID_ROWS, Math.ceil((scrollTop + viewportHeight) / TILE_HEIGHT));
+      // show loading
+      const grid = document.getElementById('grid');
+      grid.innerHTML = '<div id="loading"><div class="spinner"></div> Loading wall…</div>';
 
-      const newVisible = {};
-
-      for (let row = startRow; row < endRow; row++) {
-        for (let col = startCol; col < endCol; col++) {
-          const key = `${row}_${col}`;
-          newVisible[key] = true;
-
-          if (!visibleTiles[key]) {
-            const index = (row * GRID_COLS + col);
-            const youtubeId = sampleVideos[index % sampleVideos.length] || "";
-
-            const tile = document.createElement("div");
-            tile.className = "tile";
-            tile.style.top = `${row * TILE_HEIGHT}px`;
-            tile.style.left = `${col * TILE_WIDTH}px`;
-
-            if (youtubeId) {
-              const img = document.createElement("img");
-              img.src = `https://img.youtube.com/vi/${youtubeId}/hqdefault.jpg`;
-              img.alt = `Tile ${row}, ${col}`;
-              tile.appendChild(img);
-            } else {
-              tile.style.background = "#444";
-            }
-
-            const tileNumber = document.createElement("div");
-            tileNumber.className = "tile-number";
-            tileNumber.textContent = index + 1;
-            if (!tileNumbersVisible) {
-              tileNumber.classList.add('hidden');
-            }
-            tile.appendChild(tileNumber);
-
-            tile.addEventListener("click", () => {
-              tile.innerHTML = `
-                <div class="iframe-container">
-                  <img 
-                    src="https://img.youtube.com/vi/${youtubeId}/hqdefault.jpg" 
-                    alt="Video thumbnail" 
-                    style="width:100%; height:100%; object-fit:cover;" 
-                  />
-                </div>`;
-
-              const message = messages[index] || "No message yet.";
-              const videoUrl = `https://www.youtube.com/watch?v=${youtubeId}`;
-              const sliderVal = parseInt(slider.value, 10);
-              let wallName = wallNames[sliderVal] || "";
-
-              let bannerHtml = `Wall ${sliderVal}`;
-              if (wallName) bannerHtml += `: ${wallName}`;
-              bannerHtml += ` — Message #${index + 1}: &nbsp;|&nbsp; ${message}`;
-              if (youtubeId) {
-                bannerHtml += ` &nbsp; &nbsp; <a href="${videoUrl}" target="_blank">Click Here to Watch on YouTube</a>`;
-              }
-
-              // 🔥 Replace banner with message info and a back button
-              document.getElementById('banner').innerHTML = `
-                <div style="display:flex; flex-direction:column; align-items:center; justify-content:center;">
-                  <div style="margin-bottom:8px; text-align:center;">${bannerHtml}</div>
-                  <button id="backBtn" style="
-                    padding:8px 16px;
-                    font-size:16px;
-                    background:#444;
-                    color:#fff;
-                    border:none;
-                    border-radius:6px;
-                    cursor:pointer;
-                  ">⬅ Back to Wall Selector</button>
-                </div>
-              `;
-
-              // event for back button
-              document.getElementById('backBtn').addEventListener('click', restoreBanner);
-            });
-
-            grid.appendChild(tile);
-            visibleTiles[key] = tile;
-          }
-        }
-      }
-
-      for (let key in visibleTiles) {
-        if (!newVisible[key]) {
-          grid.removeChild(visibleTiles[key]);
-          delete visibleTiles[key];
-        }
-      }
-    }
-
-    function updateSliderDisplay() {
-      const value = parseInt(slider.value, 10);
-      const wallName = wallNames[value] || "";
-      sliderValue.textContent = wallName ? `Wall ${value}: ${wallName}` : `Wall ${value}`;
-
-      const fileName = `${value.toString().padStart(4, '0')}`;
-      const videoFile = `https://mmw-art.github.io/website/videos-${fileName}.txt`;
-      const messageFile = `https://mmw-art.github.io/website/messages-${fileName}.txt`;
+      const pad = wallId.toString().padStart(4, '0');
+      const videoFile = `https://mmw-art.github.io/website/videos-${pad}.txt`;
+      const messageFile = `https://mmw-art.github.io/website/messages-${pad}.txt`;
 
       Promise.all([
-        fetch(videoFile).then(res => res.text()),
-        fetch(messageFile).then(res => res.text())
+        fetch(videoFile).then(r => r.text()).catch(() => ''),
+        fetch(messageFile).then(r => r.text()).catch(() => '')
       ]).then(([videoText, messageText]) => {
-        const initialVideos = videoText.trim().split('\n').map(line => line.trim()).filter(Boolean);
-        const toAppendCount = 10000 - initialVideos.length;
-        sampleVideos = initialVideos.concat(new Array(toAppendCount).fill(""));
-
-        messages = messageText.trim().split('\n').map(line => line.trim()).filter(Boolean);
-
-        Object.keys(visibleTiles).forEach(key => {
-          grid.removeChild(visibleTiles[key]);
-          delete visibleTiles[key];
-        });
-
-        renderTiles();
-      }).catch(error => {
-        console.error("Error loading files:", error);
+        sampleVideos = videoText.trim().split('\n').map(l => l.trim()).filter(Boolean);
+        messages = messageText.trim().split('\n').map(l => l.trim()).filter(Boolean);
+        renderGrid();
       });
     }
 
-    slider.addEventListener('input', updateSliderDisplay);
+    // ── Render 10×10 grid ──
+    function renderGrid() {
+      const grid = document.getElementById('grid');
+      grid.innerHTML = '';
 
-    upBtn.addEventListener('click', () => {
-      if (parseInt(slider.value, 10) < parseInt(slider.max, 10)) {
-        slider.value = parseInt(slider.value, 10) + 1;
-        slider.dispatchEvent(new Event('input'));
-        updateSliderDisplay();
+      for (let i = 0; i < TOTAL; i++) {
+        const youtubeId = sampleVideos[i] || '';
+        const message = messages[i] || '';
+
+        const tile = document.createElement('div');
+        tile.className = 'tile';
+
+        if (youtubeId) {
+          const img = document.createElement('img');
+          img.src = `https://img.youtube.com/vi/${youtubeId}/mqdefault.jpg`;
+          img.alt = `Tile ${i + 1}`;
+          img.loading = 'lazy';
+          tile.appendChild(img);
+        } else {
+          const empty = document.createElement('div');
+          empty.className = 'tile-empty';
+          empty.textContent = '✦';
+          tile.appendChild(empty);
+        }
+
+        // number badge
+        const num = document.createElement('div');
+        num.className = 'tile-num';
+        num.textContent = i + 1;
+        tile.appendChild(num);
+
+        // hover overlay with message preview
+        if (message) {
+          const overlay = document.createElement('div');
+          overlay.className = 'tile-overlay';
+          const txt = document.createElement('div');
+          txt.className = 'tile-overlay-text';
+          txt.textContent = message;
+          overlay.appendChild(txt);
+          tile.appendChild(overlay);
+        }
+
+        tile.addEventListener('click', () => openModal(i, youtubeId, message));
+        grid.appendChild(tile);
       }
-    });
+    }
 
-    downBtn.addEventListener('click', () => {
-      if (parseInt(slider.value, 10) > parseInt(slider.min, 10)) {
-        slider.value = parseInt(slider.value, 10) - 1;
-        slider.dispatchEvent(new Event('input'));
-        updateSliderDisplay();
+    // ── Modal ──
+    const backdrop = document.getElementById('modal-backdrop');
+    const modalThumb = document.getElementById('modal-thumb');
+    const modalMeta = document.getElementById('modal-meta');
+    const modalMessage = document.getElementById('modal-message');
+    const modalYt = document.getElementById('modal-yt');
+    const modalClose = document.getElementById('modal-close');
+
+    function openModal(index, youtubeId, message) {
+      const wallName = wallNames[currentWall] || '';
+      modalMeta.textContent = `Wall ${currentWall}: ${wallName}  ·  Message #${index + 1}`;
+      modalMessage.textContent = message || 'No message yet.';
+
+      if (youtubeId) {
+        modalThumb.src = `https://img.youtube.com/vi/${youtubeId}/hqdefault.jpg`;
+        modalThumb.style.display = 'block';
+        modalYt.href = `https://www.youtube.com/watch?v=${youtubeId}`;
+        modalYt.classList.remove('hidden');
+      } else {
+        modalThumb.style.display = 'none';
+        modalYt.classList.add('hidden');
       }
-    });
 
-    updateSliderDisplay();
-    viewport.addEventListener("scroll", renderTiles);
-    viewport.addEventListener("touchmove", renderTiles);
-    viewport.addEventListener("wheel", renderTiles);
-    window.addEventListener("resize", renderTiles);
+      backdrop.classList.add('open');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeModal() {
+      backdrop.classList.remove('open');
+      document.body.style.overflow = '';
+    }
+
+    modalClose.addEventListener('click', closeModal);
+    backdrop.addEventListener('click', e => { if (e.target === backdrop) closeModal(); });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+    // ── Init ──
+    loadWall(1);
   </script>
 </body>
 </html>
